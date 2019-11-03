@@ -1,8 +1,7 @@
-
-
 ARG IMAGE_REPO
+ARG BASE_VERSION
 FROM ${IMAGE_REPO:-lagoon}/commons as commons
-FROM docker.elastic.co/logstash/logstash:6.8.2
+FROM docker.elastic.co/logstash/logstash:${BASE_VERSION}
 
 LABEL maintainer="amazee.io"
 ENV LAGOON=logstash
