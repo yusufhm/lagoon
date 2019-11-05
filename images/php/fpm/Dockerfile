@@ -1,5 +1,4 @@
-ARG PHP_VERSION
-ARG PHP_IMAGE_VERSION
+ARG BASE_VERSION
 ARG ALPINE_VERSION
 ARG IMAGE_REPO
 FROM ${IMAGE_REPO:-lagoon}/commons as commons
@@ -8,7 +7,9 @@ FROM composer:latest as healthcheckbuilder
 
 RUN composer create-project --no-dev amazeeio/healthz-php /healthz-php v0.0.3
 
-FROM php:${PHP_IMAGE_VERSION}-fpm-alpine${ALPINE_VERSION}
+FROM php:${BASE_VERSION}-fpm-alpine${ALPINE_VERSION}
+
+ARG BASE_VERSION
 
 LABEL maintainer="amazee.io"
 ENV LAGOON=php
@@ -83,7 +84,7 @@ RUN apk add --no-cache fcgi \
     && yes '' | pecl install -f redis-4.3.0 \
     && yes '' | pecl install -f imagick \
     && docker-php-ext-enable apcu redis xdebug imagick \
-    && case ${PHP_VERSION} in \
+    && case ${BASE_VERSION} in \
       7.4*) \
         docker-php-ext-configure gd --with-webp --with-jpeg \
         ;; \
