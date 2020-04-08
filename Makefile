@@ -621,49 +621,49 @@ api-tests = node features-openshift features-kubernetes nginx elasticsearch acti
 
 # All drupal tests
 drupal-tests = drupal drupal-postgres
-drupal-dependencies = build/varnish-drupal build/solr__5.5-drupal build/nginx-drupal build/redis build/php__7.2-cli-drupal build/php__7.3-cli-drupal build/php__7.4-cli-drupal build/postgres-drupal build/mariadb-drupal
+drupal-dependencies = build\:varnish-drupal build\:solr__5.5-drupal build\:nginx-drupal build\:redis build\:php__7.2-cli-drupal build\:php__7.3-cli-drupal build\:php__7.4-cli-drupal build\:postgres-drupal build\:mariadb-drupal
 
 # These targets are used as dependencies to bring up containers in the right order.
 .PHONY: main-test-services-up
-main-test-services-up: $(foreach image,$(main-test-services),build/$(image))
+main-test-services-up: $(foreach image,$(main-test-services),build\:$(image))
 	IMAGE_REPO=$(CI_BUILD_TAG) docker-compose -p $(CI_BUILD_TAG) --compatibility up -d $(main-test-services)
 	$(MAKE) wait-for-keycloak
 
 .PHONY: openshift-test-services-up
-openshift-test-services-up: main-test-services-up $(foreach image,$(openshift-test-services),build/$(image))
+openshift-test-services-up: main-test-services-up $(foreach image,$(openshift-test-services),build\:$(image))
 	IMAGE_REPO=$(CI_BUILD_TAG) docker-compose -p $(CI_BUILD_TAG) --compatibility up -d $(openshift-test-services)
 
 .PHONY: kubernetes-test-services-up
-kubernetes-test-services-up: main-test-services-up $(foreach image,$(kubernetes-test-services),build/$(image))
+kubernetes-test-services-up: main-test-services-up $(foreach image,$(kubernetes-test-services),build\:$(image))
 	IMAGE_REPO=$(CI_BUILD_TAG) docker-compose -p $(CI_BUILD_TAG) --compatibility up -d $(kubernetes-test-services)
 
 .PHONY: drupaltest-services-up
-drupaltest-services-up: main-test-services-up $(foreach image,$(drupal-test-services),build/$(image))
+drupaltest-services-up: main-test-services-up $(foreach image,$(drupal-test-services),build\:$(image))
 	IMAGE_REPO=$(CI_BUILD_TAG) docker-compose -p $(CI_BUILD_TAG) --compatibility up -d $(drupal-test-services)
 
 .PHONY: webhooks-test-services-up
-webhooks-test-services-up: main-test-services-up $(foreach image,$(webhooks-test-services),build/$(image))
+webhooks-test-services-up: main-test-services-up $(foreach image,$(webhooks-test-services),build\:$(image))
 	IMAGE_REPO=$(CI_BUILD_TAG) docker-compose -p $(CI_BUILD_TAG) --compatibility up -d $(webhooks-test-services)
 
 .PHONY: local-registry-up
-local-registry-up: build/local-registry
+local-registry-up: build\:local-registry
 	IMAGE_REPO=$(CI_BUILD_TAG) docker-compose -p $(CI_BUILD_TAG) --compatibility up -d local-registry
 
 openshift-run-api-tests = $(foreach image,$(api-tests),openshift-tests/$(image))
 .PHONY: $(openshift-run-api-tests)
-$(openshift-run-api-tests): minishift build/oc-build-deploy-dind openshift-test-services-up push-minishift
+$(openshift-run-api-tests): minishift build\:oc-build-deploy-dind openshift-test-services-up push-minishift
 		$(eval testname = $(subst openshift-tests/,,$@))
 		IMAGE_REPO=$(CI_BUILD_TAG) docker-compose -p $(CI_BUILD_TAG) --compatibility run --rm tests-openshift ansible-playbook /ansible/tests/$(testname).yaml
 
 openshift-run-drupal-tests = $(foreach image,$(drupal-tests),openshift-tests/$(image))
 .PHONY: $(openshift-run-drupal-tests)
-$(openshift-run-drupal-tests): minishift build/oc-build-deploy-dind $(drupal-dependencies) openshift-test-services-up drupaltest-services-up push-minishift
+$(openshift-run-drupal-tests): minishift build\:oc-build-deploy-dind $(drupal-dependencies) openshift-test-services-up drupaltest-services-up push-minishift
 		$(eval testname = $(subst openshift-tests/,,$@))
 		IMAGE_REPO=$(CI_BUILD_TAG) docker-compose -p $(CI_BUILD_TAG) --compatibility run --rm tests-openshift ansible-playbook /ansible/tests/$(testname).yaml
 
 openshift-run-webhook-tests = $(foreach image,$(webhook-tests),openshift-tests/$(image))
 .PHONY: $(openshift-run-webhook-tests)
-$(openshift-run-webhook-tests): minishift build/oc-build-deploy-dind openshift-test-services-up webhooks-test-services-up push-minishift
+$(openshift-run-webhook-tests): minishift build\:oc-build-deploy-dind openshift-test-services-up webhooks-test-services-up push-minishift
 		$(eval testname = $(subst openshift-tests/,,$@))
 		IMAGE_REPO=$(CI_BUILD_TAG) docker-compose -p $(CI_BUILD_TAG) --compatibility run --rm tests-openshift ansible-playbook /ansible/tests/$(testname).yaml
 
@@ -673,7 +673,7 @@ end2end-all-tests = $(foreach image,$(all-tests-list),end2end-tests/$(image))
 end2end-tests: $(end2end-all-tests)
 
 .PHONY: start-end2end-ansible
-start-end2end-ansible: build/tests
+start-end2end-ansible: build\:tests
 		docker-compose -f docker-compose.yaml -f docker-compose.end2end.yaml -p end2end --compatibility up -d tests
 
 $(end2end-all-tests): start-end2end-ansible
@@ -699,14 +699,14 @@ $(push-minishift-images):
 		docker push $$(cat minishift):30000/lagoon/$(image) | cat; \
 	fi
 
-push-docker-host-image: build/docker-host minishift/login-docker-registry
+push-docker-host-image: minishift build\:docker-host minishift/login-docker-registry
 	docker tag $(CI_BUILD_TAG)/docker-host $$(cat minishift):30000/lagoon/docker-host
 	docker push $$(cat minishift):30000/lagoon/docker-host | cat
 
-lagoon-kickstart: $(foreach image,$(deployment-test-services-rest),build/$(image))
+lagoon-kickstart: $(foreach image,$(deployment-test-services-rest),build\:$(image))
 	IMAGE_REPO=$(CI_BUILD_TAG) CI=false docker-compose -p $(CI_BUILD_TAG) --compatibility up -d $(deployment-test-services-rest)
-	sleep 90
-	curl -X POST -H "Content-Type: application/json" --data 'mutation { deployEnvironmentBranch(input: { project: { name: "lagoon" }, branchName: "master" } )}' http://localhost:3000/graphql
+	sleep 30
+	curl -X POST http://localhost:5555/deploy -H 'content-type: application/json' -d '{ "projectName": "lagoon", "branchName": "master" }'
 	make logs
 
 # Start only the local Harbor for testing purposes
@@ -882,7 +882,9 @@ endif
 	sleep 60
 	eval $$(./local-dev/minishift/minishift --profile $(CI_BUILD_TAG) oc-env); \
 	for i in {10..30}; do oc --context="myproject/$$(./local-dev/minishift/minishift --profile $(CI_BUILD_TAG) ip | sed 's/\./-/g'):8443/system:admin" patch pv pv00$${i} -p '{"spec":{"storageClassName":"bulk"}}'; done;
-	$(MAKE) minishift/configure-lagoon-local push-docker-host-image
+
+.PHONY: minishift/start
+minishift/start: minishift minishift/configure-lagoon-local push-docker-host-image
 
 .PHONY: minishift/login-docker-registry
 minishift/login-docker-registry: minishift
@@ -930,7 +932,7 @@ openshift-lagoon-setup:
 # This calls the regular openshift-lagoon-setup first, which configures our minishift like we configure a real openshift for lagoon.
 # It then overwrites the docker-host deploymentconfig and cronjobs to use our own just-built docker-host images.
 .PHONY: minishift/configure-lagoon-local
-minishift/configure-lagoon-local: openshift-lagoon-setup
+minishift/configure-lagoon-local: minishift openshift-lagoon-setup
 	eval $$(./local-dev/minishift/minishift --profile $(CI_BUILD_TAG) oc-env); \
 	bash -c "oc process -n lagoon -p SERVICE_IMAGE=172.30.1.1:5000/lagoon/docker-host:latest -p REPOSITORY_TO_UPDATE=lagoon -f services/docker-host/docker-host.yaml | oc -n lagoon apply -f -"; \
 	oc -n default set env dc/router -e ROUTER_LOG_LEVEL=info -e ROUTER_SYSLOG_ADDRESS=172.17.0.1:5140;
@@ -1013,7 +1015,7 @@ else
 K3D_BTRFS_VOLUME :=
 endif
 
-k3d: local-dev/k3d local-dev/kubectl local-dev/helm/helm build/docker-host
+k3d: local-dev/k3d local-dev/kubectl local-dev/helm/helm build\:docker-host
 	$(MAKE) local-registry-up
 	$(info starting k3d with name $(K3D_NAME))
 	$(info Creating Loopback Interface for docker gateway if it does not exist, this might ask for sudo)
@@ -1063,7 +1065,7 @@ endif
 	$(MAKE) push-kubectl-build-deploy-dind
 
 .PHONY: push-kubectl-build-deploy-dind
-push-kubectl-build-deploy-dind: build/kubectl-build-deploy-dind
+push-kubectl-build-deploy-dind: build\:kubectl-build-deploy-dind
 	docker tag $(CI_BUILD_TAG)/kubectl-build-deploy-dind localhost:5000/lagoon/kubectl-build-deploy-dind
 	docker push localhost:5000/lagoon/kubectl-build-deploy-dind
 
@@ -1141,12 +1143,8 @@ rebuild-push-oc-build-deploy-dind:
 
 
 .PHONY: ui-development
-ui-development: build/api build/api-db build/local-api-data-watcher-pusher build/ui build/keycloak build/keycloak-db build/broker build/broker-single
+ui-development: build\:api build\:api-db build\:local-api-data-watcher-pusher build\:ui build\:keycloak build\:keycloak-db build\:broker build\:broker-single
 	IMAGE_REPO=$(CI_BUILD_TAG) docker-compose -p $(CI_BUILD_TAG) --compatibility up -d api api-db local-api-data-watcher-pusher ui keycloak keycloak-db broker
-
-.PHONY: api-development
-api-development: build/api build/api-db build/local-api-data-watcher-pusher build/keycloak build/keycloak-db build/broker build/broker-single
-	IMAGE_REPO=$(CI_BUILD_TAG) docker-compose -p $(CI_BUILD_TAG) --compatibility up -d api api-db local-api-data-watcher-pusher keycloak keycloak-db broker
 
 #######
 ####### Container image build system
