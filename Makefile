@@ -112,7 +112,7 @@ k8s-tests: $(all-k8s-tests)
 
 .PHONY: $(all-k8s-tests)
 $(all-k8s-tests): k3d kubernetes-test-services-up
-		$(MAKE) push-local-registry -j6
+		$(MAKE) build:push-local-registry -j6
 		$(eval testname = $(subst k8s-tests/,,$@))
 		IMAGE_REPO=$(CI_BUILD_TAG) docker-compose -p $(CI_BUILD_TAG) --compatibility run --rm \
 			tests-kubernetes ansible-playbook --skip-tags="skip-on-kubernetes" \
@@ -120,25 +120,6 @@ $(all-k8s-tests): k3d kubernetes-test-services-up
 			--extra-vars \
 			"$$(cat $$(./local-dev/k3d get-kubeconfig --name='$(K3D_NAME)') | \
 				jq -rcsR '{kubeconfig: .}')"
-
-# push command of our base images into minishift
-push-local-registry-images = $(foreach image,$(base-images) $(base-images-with-versions),[push-local-registry]-$(image))
-# tag and push all images
-.PHONY: push-local-registry
-push-local-registry: $(push-local-registry-images)
-# tag and push of each image
-.PHONY:
-	docker login -u admin -p admin 172.17.0.1:8084
-	$(push-local-registry-images)
-
-$(push-local-registry-images):
-	$(eval image = $(subst [push-local-registry]-,,$@))
-	$(eval image = $(subst __,:,$(image)))
-	$(info pushing $(image) to local local-registry)
-	if docker inspect $(CI_BUILD_TAG)/$(image) > /dev/null 2>&1; then \
-		docker tag $(CI_BUILD_TAG)/$(image) localhost:5000/lagoon/$(image) && \
-		docker push localhost:5000/lagoon/$(image) | cat; \
-	fi
 
 # Define list of all tests
 all-openshift-tests-list:=	features-openshift \
