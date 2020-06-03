@@ -1062,6 +1062,25 @@ CREATE OR REPLACE PROCEDURE
   END;
 $$
 
+CREATE OR REPLACE PROCEDURE
+  add_min_max_to_billing_modifier()
+
+  BEGIN
+    IF NOT EXISTS (
+      SELECT NULL
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE
+        table_name = 'billing_modifier'
+        AND table_schema = 'infrastructure'
+        AND column_name = 'min'
+    ) THEN
+      ALTER TABLE `billing_modifier`
+      ADD `min` FLOAT DEFAULT 0,
+      ADD `max` FLOAT DEFAULT 0;
+    END IF;
+  END;
+$$
+
 DELIMITER ;
 
 -- If adding new procedures, add them to the bottom of this list
@@ -1112,6 +1131,7 @@ CALL add_container_registry_scope_to_env_vars();
 CALL add_internal_container_registry_scope_to_env_vars();
 CALL update_user_password();
 CALL add_metadata_to_project();
+CALL add_min_max_to_billing_modifier();
 
 -- Drop legacy SSH key procedures
 DROP PROCEDURE IF EXISTS CreateProjectSshKey;
