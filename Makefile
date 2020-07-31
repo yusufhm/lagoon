@@ -576,9 +576,9 @@ ui-development: build\:api build\:api-db build\:local-api-data-watcher-pusher bu
 DOCKERFILES = $(shell find images services local-dev cli tests -type f -name 'Dockerfile*')
 DOCKERRULES = .docker.mk
 PHP_VERSIONS := 7.2 7.3 7.4
-NODE_VERSIONS := 10 12
+NODE_VERSIONS := 10 12 14
 PYTHON_VERSIONS := 2.7 3.7
-SOLR_VERSIONS := 5.5 6.6 7.5
+SOLR_VERSIONS := 5.5 6.6 7.7
 # IMPORTANT: only one of each minor version, as the images are tagged based on minor version
 ELASTIC_VERSIONS := 7.6.1
 
