@@ -580,7 +580,7 @@ NODE_VERSIONS := 10 12
 PYTHON_VERSIONS := 2.7 3.7
 SOLR_VERSIONS := 5.5 6.6 7.5
 # IMPORTANT: only one of each minor version, as the images are tagged based on minor version
-ELASTIC_VERSIONS := 7.1.1 7.2.1 7.3.2
+ELASTIC_VERSIONS := 7.6.1
 
 # Build a docker image.
 # $1: image name

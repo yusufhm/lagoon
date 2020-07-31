@@ -149,18 +149,18 @@ function genBuildRules(fullTarget, dockerfile) {
 		split(ELASTIC_VERSIONS, versions, " ");
 		# construct the rules
 		for (i in versions) {
-			# generate the minor version by stripping the patch version
-			minorVer = sprintf("%.3s", versions[i])
+			# generate the major version by stripping the minor and patch version
+			majorVer = sprintf("%.1s", versions[i])
 			# insert the version
 			rule = fullTarget;
-			gsub(/kibana/, "kibana-" minorVer, rule);
-			gsub(/elasticsearch/, "elasticsearch-" minorVer, rule);
-			gsub(/logstash/, "logstash-" minorVer, rule);
+			gsub(/kibana/, "kibana-" majorVer, rule);
+			gsub(/elasticsearch/, "elasticsearch-" majorVer, rule);
+			gsub(/logstash/, "logstash-" majorVer, rule);
 			# append the recipe to the rules
 			rules = rules rule "\n\t$(call docker_build_version_cmd," name "," \
-						versions[i] "," minorVer "," dockerfile "," context")\n";
+						versions[i] "," majorVer "," dockerfile "," context")\n";
 			# append versioned target and tag to the lists of all targets and tags
-			tag = name ":" minorVer
+			tag = name ":" majorVer
 			appendToLists(rule, class, tag)
 		}
 	} else if (fullTarget ~ /^build\\:(ssh|yarn-workspace-builder|drush-alias-testing)/) {
